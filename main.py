@@ -1,7 +1,6 @@
 from utils.crude import read, create_user, search_user, remove, update
 from models.data import users
 
-
 if __name__ == '__main__':
 
     print(f'Witaj {users[0]["name"]}! ')

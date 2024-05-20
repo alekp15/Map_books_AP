@@ -1,5 +1,6 @@
 from tkinter import *
-
+import requests
+from bs4 import BeautifulSoup
 import tkintermapview
 
 users=[]
@@ -9,6 +10,18 @@ class User:
         self.nazwisko = nazwisko
         self.posty = posty
         self.miejscowosc = miejscowosc
+        self.coords=User.get_coords(self)
+        self.marker=map_widget.set_marker(self.coords[0], self.coords[1], text=f"{self.imie}")
+
+    def get_coords(self) -> list:
+        adres_url = f"https://pl.wikipedia.org/wiki/{self.miejscowosc}"
+        response = requests.get(adres_url)
+        response_html = BeautifulSoup(response.text, 'html.parser')
+        # print(response_html)
+        latitude = float(response_html.select(".latitude")[1].text.replace(",", "."))
+        longitude = float(response_html.select(".longitude")[1].text.replace(",", "."))
+        print([latitude, longitude])
+        return latitude, longitude
 
 def dodaj_uzytkownika():
     imie = entry_imie.get()
@@ -37,6 +50,8 @@ def pokaz_szczegoly_uzytkownika():
     nazwisko=users[i].nazwisko
     posty=users[i].posty
     miejscowosc=users[i].miejscowosc
+    map_widget.set_position(users[i].coords[0], users[i].coords[1],)
+    map_widget.set_zoom(15)
 
     label_imie_szczegoly_wartosc.config(text=imie)
     label_nazwisko_szczegoly_wartosc.config(text=nazwisko)
@@ -45,6 +60,7 @@ def pokaz_szczegoly_uzytkownika():
 
 def usun_uzytkownika():
     i=listbox_lista_obiektow.index(ACTIVE)
+    users[i].marker.delete()
     users.pop(i)
     lista_uzytkownikow()
 
@@ -66,6 +82,9 @@ def aktualizuj_uzytkownika(i):
     users[i].nazwisko=entry_nazwisko.get()
     users[i].posty=entry_posty.get()
     users[i].miejscowosc=entry_miejscowosc.get()
+    users[i].coords=User.get_coords(users[i])
+    users[i].marker.delete()
+    users[i].marker = map_widget.set_marker(users[i].coords[0], users[i].coords[1], text=f"{users[i].imie}")
     lista_uzytkownikow()
 
     entry_imie.delete(0, END)
@@ -154,7 +173,11 @@ label_miejscowosc_szczegoly_wartosc.grid(row=1, column=7)
 
 
 
-map_widget=tkintermapview.TkinterMapView(ramka_szczegoly_obiektu, width=700, height=300)
+map_widget=tkintermapview.TkinterMapView(ramka_szczegoly_obiektu, width=700, height=400)
 map_widget.grid(row=2, column=0, columnspan=8)
+map_widget.set_position(52.21,21.0)
+map_widget.set_zoom(5)
+
+
 
 root.mainloop()
